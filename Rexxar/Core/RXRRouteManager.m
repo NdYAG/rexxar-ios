@@ -254,6 +254,10 @@
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:route.remoteHTML
                                                            cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData
                                                        timeoutInterval:60];
+    NSString *userAgent = [RXRConfig userAgent];
+    if (userAgent) {
+      [request setValue:userAgent forHTTPHeaderField:@"User-Agent"];
+    }
     [[self.session downloadTaskWithRequest:request completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
 
       RXRDebugLog(@"Download %@", response.URL);
