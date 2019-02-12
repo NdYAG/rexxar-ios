@@ -12,6 +12,7 @@
 #import "RXRRouteFileCache.h"
 #import "RXRLogger.h"
 #import "NSURL+Rexxar.h"
+#import <MobileCoreServices/MobileCoreServices.h>
 
 @interface RXRCacheFileInterceptor () <NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
 
@@ -59,7 +60,22 @@
   NSURL *localURL = [[self class] _rxr_localFileURL:self.request.URL];
   if (localURL) {
     NSData *data = [NSData dataWithContentsOfURL:localURL];
-    if ([data length] > 0) {
+
+    // monkey patch for wrongly cached files
+    Boolean isFileValid = YES;
+
+    NSString *fileExtension = [localURL pathExtension];
+    NSString *UTI = (__bridge_transfer NSString *)UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, (__bridge CFStringRef)fileExtension, NULL);
+    NSString *contentType = (__bridge_transfer NSString *)UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)UTI, kUTTagClassMIMEType);
+
+    if ([contentType isEqualToString:@"text/javascript"] || [contentType isEqualToString:@"text/css"]) {
+      NSString *fileContent = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+      if ([fileContent hasPrefix:@"<!doctype html>"]) {
+        isFileValid = NO;
+      }
+    }
+
+    if ([data length] > 0 && isFileValid) {
       NSHTTPURLResponse *response = [NSHTTPURLResponse rxr_responseWithURL:self.request.URL
                                                                 statusCode:200
                                                               headerFields:nil
