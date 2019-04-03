@@ -46,6 +46,9 @@
  */
 + (void)unregisterRXRProtocolClass:(Class)clazz;
 
+/* 暴露注册数量接口 */
++ (NSInteger)_rxr_countForRegisteredClass:(Class)clazz;
+
 /**
  * 实现 URLSession 共享和 URLProtocol client 回调的分发
  *
